@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Employé</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 16px;
+            width: 420px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 26px;
+            font-size: 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.3);
+        }
+
+        .employe {
+            margin-top: 25px;
+            text-align: left;
+            background: #f4f6fb;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .employe p {
+            margin: 8px 0;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>👨‍💼 Employé</h1>
+        <button onclick="getEmploye()">Charger Employé</button>
+
+        <div id="employe" class="employe">
+            <p><span class="label">Nom :</span> <span id="nom"></span></p>
+            <p><span class="label">Prénom :</span> <span id="prenom"></span></p>
+            <p><span class="label">Salaire :</span> <span id="salaire"></span> €</p>
+        </div>
+    </div>
+
+    <script src="product.js"></script>
+</body>
+</html>
