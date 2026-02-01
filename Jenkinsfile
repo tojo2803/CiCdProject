@@ -5,12 +5,25 @@ pipeline {
         nodejs 'nodejs-18'
     }
 
+    environment {
+        SERVER_USER = 'root'          
+        SERVER_IP   = '192.168.1.50'      
+        SSH_CRED    = 'vm-ssh-key'    
+    }
+
     stages {
+
+        stage('Clean workspace') {
+            steps {
+                deleteDir()
+            }
+        }
 
         stage('Checkout') {
             steps {
                 echo "Récupération du code depuis GitHub"
-                git branch: 'main', url: 'https://github.com/tojo2803/CiCdProject.git'
+                git branch: 'exercice5',
+                    url: 'https://github.com/tojo2803/CiCdProject.git'
             }
         }
 
@@ -32,21 +45,52 @@ pipeline {
             }
         }
 
-        stage('Packager frontend') {
+        stage('Package Frontend') {
             steps {
                sh 'tar --exclude=Backend/frontend.tar.gz -czf frontend.tar.gz Frontend'
             }
         }
 
-        stage('Packager backend') {
+        stage('Package Backend') {
             steps {
                 sh '''
-                    tar \
-                    --exclude=Backend/node_modules \
-                    --exclude=Backend/backend.tar.gz \
-                    -czf backend.tar.gz \
-                    Backend
+                    tar --exclude=Backend/node_modules -czf backend.tar.gz Backend
                 '''
+            }
+        }
+
+        stage('Deploy Frontend') {
+            steps {
+                sshagent(credentials: [env.SSH_CRED]) {
+                    sh '''
+                        # Copier l’archive sur la VM
+                        scp frontend.tar.gz ${SERVER_USER}@${SERVER_IP}:/tmp/
+
+                        # Déployer dans /var/www/html
+                        ssh ${SERVER_USER}@${SERVER_IP} "
+                            sudo rm -rf /var/www/html/*
+                            sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/html --strip-components=1
+                        "
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Backend') {
+            steps {
+                sshagent(credentials: [env.SSH_CRED]) {
+                    sh '''
+                        scp backend.tar.gz ${SERVER_USER}@${SERVER_IP}:/tmp/
+
+                        ssh ${SERVER_USER}@${SERVER_IP} "
+                            rm -rf /opt/backend/*
+                            tar -xzf /tmp/backend.tar.gz -C /opt/backend --strip-components=1
+                            cd /opt/backend
+                            npm install
+                            pm2 restart backend || pm2 start index.js --name backend
+                        "
+                    '''
+                }
             }
         }
     }
@@ -54,10 +98,10 @@ pipeline {
     post {
         success {
             archiveArtifacts artifacts: '*.tar.gz'
-            echo '🎉 Livraison continue réussie'
+            echo '🚀 Déploiement continu réussi'
         }
         failure {
-            echo '❌ Pipeline échouée'
+            echo '❌ Déploiement échoué'
         }
     }
 }
