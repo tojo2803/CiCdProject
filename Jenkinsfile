@@ -5,10 +5,15 @@ pipeline {
         nodejs 'nodejs-18'
     }
 
+    parameters {
+        string(name: 'APP_PORT', defaultValue: '3000', description: 'Numéro de port pour le backend')
+    }
+
     environment {
-        SERVER_USER = 'root'          
-        SERVER_IP   = '192.168.1.50'      
-        SSH_CRED    = 'vm-ssh-key'    
+        SERVER_USER = 'root'           
+        SERVER_IP   = '192.168.1.50'  
+        SSH_CRED    = 'vm-ssh-key'     
+        APP_PORT    = "${params.APP_PORT}"  
     }
 
     stages {
@@ -22,7 +27,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Récupération du code depuis GitHub"
-                git branch: 'exercice5',
+                git branch: 'exercice6',
                     url: 'https://github.com/tojo2803/CiCdProject.git'
             }
         }
@@ -62,7 +67,7 @@ pipeline {
         stage('Deploy Frontend') {
             steps {
                 sshagent(credentials: [env.SSH_CRED]) {
-                    sh '''
+                    sh """
                         # Copier l’archive sur la VM
                         scp frontend.tar.gz ${SERVER_USER}@${SERVER_IP}:/tmp/
 
@@ -71,7 +76,7 @@ pipeline {
                             sudo rm -rf /var/www/html/*
                             sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/html --strip-components=1
                         "
-                    '''
+                    """
                 }
             }
         }
@@ -79,7 +84,7 @@ pipeline {
         stage('Deploy Backend') {
             steps {
                 sshagent(credentials: [env.SSH_CRED]) {
-                    sh '''
+                    sh """
                         scp backend.tar.gz ${SERVER_USER}@${SERVER_IP}:/tmp/
 
                         ssh ${SERVER_USER}@${SERVER_IP} "
@@ -87,9 +92,13 @@ pipeline {
                             tar -xzf /tmp/backend.tar.gz -C /opt/backend --strip-components=1
                             cd /opt/backend
                             npm install
-                            pm2 restart backend || pm2 start index.js --name backend
+
+                            # Définir le port du backend via la variable Jenkins
+                            export PORT=${APP_PORT}
+
+                            pm2 restart backend || pm2 start index.js --name backend --env PORT=${APP_PORT}
                         "
-                    '''
+                    """
                 }
             }
         }
