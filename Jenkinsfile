@@ -1,11 +1,12 @@
 pipeline {
-     agent any
+    agent any
 
     tools {
         nodejs 'nodejs-18'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo "Récupération du code depuis GitHub"
@@ -30,14 +31,33 @@ pipeline {
                 }
             }
         }
+
+        stage('Packager frontend') {
+            steps {
+               sh 'tar --exclude=Backend/frontend.tar.gz -czf frontend.tar.gz Frontend'
+            }
+        }
+
+        stage('Packager backend') {
+            steps {
+                sh '''
+                    tar \
+                    --exclude=Backend/node_modules \
+                    --exclude=Backend/backend.tar.gz \
+                    -czf backend.tar.gz \
+                    Backend
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Pipeline terminé avec succès 🎉'
+            archiveArtifacts artifacts: '*.tar.gz'
+            echo '🎉 Livraison continue réussie'
         }
         failure {
-            echo 'Pipeline échoué ❌'
+            echo '❌ Pipeline échouée'
         }
     }
 }
